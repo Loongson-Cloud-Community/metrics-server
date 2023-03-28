@@ -1,7 +1,7 @@
 # Common User-Settable Flags
 # --------------------------
 REGISTRY?=gcr.io/k8s-staging-metrics-server
-ARCH?=amd64
+ARCH?=loong64
 
 # Release variables
 # ------------------
@@ -11,7 +11,7 @@ BUILD_DATE:=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 
 # Consts
 # ------
-ALL_ARCHITECTURES=amd64 arm arm64 ppc64le s390x
+ALL_ARCHITECTURES=amd64 arm arm64 ppc64le s390x loong64
 export DOCKER_CLI_EXPERIMENTAL=enabled
 
 # Computed variables
@@ -28,7 +28,8 @@ all: metrics-server
 # -----------
 
 SRC_DEPS=$(shell find pkg cmd -type f -name "*.go")
-CHECKSUM=$(shell md5sum $(SRC_DEPS) | md5sum | awk '{print $$1}')
+#CHECKSUM=$(shell md5sum $(SRC_DEPS) | md5sum | awk '{print $$1}')
+VERSION=0.5.0
 PKG:=k8s.io/client-go/pkg
 LDFLAGS:=-X $(PKG)/version.gitVersion=$(GIT_TAG) -X $(PKG)/version.gitCommit=$(GIT_COMMIT) -X $(PKG)/version.buildDate=$(BUILD_DATE)
 
@@ -44,8 +45,8 @@ CONTAINER_ARCH_TARGETS=$(addprefix container-,$(ALL_ARCHITECTURES))
 container:
 	# Pull base image explicitly. Keep in sync with Dockerfile, otherwise
 	# GCB builds will start failing.
-	docker pull golang:1.16.4
-	docker buildx build -t $(REGISTRY)/metrics-server-$(ARCH):$(CHECKSUM) --build-arg ARCH=$(ARCH) --build-arg GIT_TAG=$(GIT_TAG) --build-arg GIT_COMMIT=$(GIT_COMMIT) .
+	docker pull cr.loongnix.cn/library/golang:1.19
+	docker build -t $(REGISTRY)/metrics-server:$(VERSION) --build-arg ARCH=$(ARCH) --build-arg GIT_TAG=$(GIT_TAG) --build-arg GIT_COMMIT=$(GIT_COMMIT) .
 
 .PHONY: container-all
 container-all: $(CONTAINER_ARCH_TARGETS);
